@@ -1,1 +1,302 @@
+-- TABLE 1: customers
+CREATE TABLE customers (
+    customer_id   INT PRIMARY KEY,
+    first_name    VARCHAR(50)  NOT NULL,
+    last_name     VARCHAR(50)  NOT NULL,
+    email         VARCHAR(100) UNIQUE NOT NULL,
+    city          VARCHAR(50),
+    state         VARCHAR(50),
+    signup_date   DATE
+);
 
+-- TABLE 2: products
+CREATE TABLE products (
+    product_id    INT PRIMARY KEY,
+    product_name  VARCHAR(150) NOT NULL,
+    category      VARCHAR(50)  NOT NULL,
+    sub_category  VARCHAR(50),
+    unit_price    NUMERIC(10,2) NOT NULL,
+    cost_price    NUMERIC(10,2) NOT NULL
+);
+
+-- TABLE 3: orders
+CREATE TABLE orders (
+    order_id        INT PRIMARY KEY,
+    customer_id     INT NOT NULL,
+    order_date      DATE NOT NULL,
+    status          VARCHAR(20),
+    payment_mode    VARCHAR(30),
+    shipping_city   VARCHAR(50),
+    shipping_state  VARCHAR(50),
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+-- TABLE 4: order_items
+CREATE TABLE order_items (
+    item_id          INT PRIMARY KEY,
+    order_id         INT NOT NULL,
+    product_id       INT NOT NULL,
+    quantity         INT NOT NULL,
+    unit_price       NUMERIC(10,2) NOT NULL,
+    discount_percent NUMERIC(5,2)  DEFAULT 0,
+    final_price      NUMERIC(10,2) NOT NULL,
+    total_amount     NUMERIC(10,2) NOT NULL,
+    profit           NUMERIC(10,2),
+    FOREIGN KEY (order_id)   REFERENCES orders(order_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+--Verifying imported tables
+
+SELECT 'customers', COUNT(*) AS total_rows FROM customers
+UNION ALL
+SELECT 'products' , COUNT(*) FROM products
+UNION ALL
+SELECT 'orders',	COUNT(*) FROM orders
+UNION ALL 
+SELECT 'order_items', COUNT(*) FROM order_items;
+
+
+--Task 1 — Show all columns from the customers table. Limit to 10 rows.
+
+SELECT * FROM customers LIMIT 10;
+
+--Task 2 — How many total customers do we have?
+
+SELECT COUNT(*) FROM customers;
+
+--Task 3 — Show all unique cities we deliver to. No duplicates.
+
+SELECT DISTINCT shipping_city FROM orders; 
+
+--Task 4 — How many products do we have in each category?
+
+SELECT category,COUNT(product_id) AS total_product
+FROM products GROUP BY category ;
+
+--Task 5 — Show all products where unit_price is greater than 10,000. Order them highest price first.
+
+SELECT product_name, unit_price FROM products WHERE unit_price > 10000 ORDER BY unit_price DESC;
+
+-- WHERE: filter rows first, then group
+-- "Only count products that cost more than 1000"
+SELECT category, COUNT(*) AS total_products
+FROM products
+WHERE cost_price > 1000
+GROUP BY category;
+
+-- HAVING: group first, then filter the groups
+-- "Only show categories that have more than 5 products"
+
+SELECT category,COUNT(*) AS total_products
+FROM products
+GROUP BY category
+HAVING COUNT(*) > 5;
+
+/*Task 6 — 
+"Show me the total revenue (sum of total_amount) and total profit (sum of profit) from all orders."*/
+
+SELECT 
+	SUM(total_amount) AS total_revenue,
+	SUM(profit) AS total_profit
+FROM order_items;
+
+/*Task 7 — First JOIN query:
+"Show each order_id along with its order_date. You need both order_items AND orders tables.""*/
+
+SELECT
+	item.order_id , order_date
+FROM order_items AS item LEFT JOIN orders AS o -- can use any join as all ids exists in both the tables
+ON item.order_id = o.order_id;
+
+
+--Task 8 — Business KPI: "What is the total revenue per product category?"
+
+SELECT
+	p.category,
+	SUM(total_amount) AS total_revenue
+FROM order_items as item LEFT JOIN products p ON  -- can use any join as all ids exists in both the tables
+item.product_id = p.product_id 
+GROUP BY p.category;
+
+--Task 9 — Top 5 cities by total revenue
+
+SELECT 
+	o.shipping_city AS city,
+	SUM(item.total_amount) AS total_revenue
+FROM orders AS o JOIN order_items AS item
+ON o.order_id = item.order_id 
+GROUP BY o.shipping_city ORDER BY total_revenue DESC limit 5;
+
+--Task 10 — Average Order Value (AOV)
+
+SELECT 
+	ROUND(SUM(total_amount) / COUNT(DISTINCT order_id),2) AS AOV
+FROM order_items;
+
+--Task 11 — Monthly revenue trend--Which month had the highest revenue?
+
+SELECT 
+	TO_CHAR(o.order_date , 'YYYY-MM') AS Month,
+	SUM(item.total_amount) AS total_revenue
+FROM orders o JOIN order_items item ON o.order_id = item.order_id
+GROUP BY Month ORDER BY Month;
+
+--Task 12 — Most profitable product sub-category(Which sub_category made the most profit?)
+
+SELECT 
+	p.sub_category,
+	SUM(item.profit) AS total_revenue
+FROM products p JOIN order_items item ON p.product_id = item.product_id
+GROUP BY p.sub_category ORDER BY total_revenue DESC;
+
+
+--Task 13 — Revenue per customer with value segment
+
+SELECT 
+	c.customer_id,
+	SUM(item.total_amount) AS total_spent,
+	CASE WHEN SUM(item.total_amount) > 50000 THEN 'HIGH'
+		WHEN SUM(item.total_amount)  BETWEEN 20000 AND 50000 THEN 'MEDIUM'
+	ELSE 'LOW' END AS customer_segment
+FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items AS item ON item.order_id = o.order_id
+GROUP BY c.customer_id;
+
+--Task 14 — Customers who spent above average
+
+WITH customer_spent AS 
+(SELECT
+	c.customer_id,CONCAT(c.first_name ,' ', c.last_name) as customer_name,
+	SUM(item.total_amount) AS total_spent
+FROM customers c join orders o ON c.customer_id = o.customer_id JOIN order_items AS item ON item.order_id = o.order_id
+GROUP BY c.customer_id,c.first_name, c.last_name)
+SELECT 
+	customer_id, customer_name, total_spent
+FROM customer_spent
+WHERE total_spent > (SELECT SUM(total_spent)/COUNT(customer_name) FROM customer_spent) 
+GROUP BY customer_id ,customer_name,total_spent;
+
+
+--Task 15 — Rank customers by total spending
+
+WITH customer_spent AS 
+(SELECT
+	c.customer_id,CONCAT(c.first_name ,' ', c.last_name) as customer_name,
+	SUM(item.total_amount) AS total_spent
+FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items AS item ON item.order_id = o.order_id
+GROUP BY c.customer_id,c.first_name, c.last_name
+)
+
+SELECT
+	customer_id,customer_name,
+	total_spent,
+	RANK() OVER(ORDER BY total_spent DESC) AS spending_rank 
+FROM customer_spent;
+	
+--Task 16 — Rank products within each category
+
+SELECT
+	product_name,
+	category, unit_price,
+	RANK() OVER(PARTITION BY category ORDER BY unit_price DESC) AS products_rank
+FROM Products ;
+
+--Task 17 — Month-over-month revenue growth
+
+WITH monthly_revenue AS (
+    SELECT
+        TO_CHAR(o.order_date, 'YYYY-MM') AS month,
+        SUM(item.total_amount)           AS monthly_rev
+    FROM orders AS o
+    JOIN order_items AS item ON o.order_id = item.order_id
+    GROUP BY month
+)
+SELECT 
+	month,
+	monthly_rev,
+	COALESCE(LAG(monthly_rev) OVER(ORDER BY month),0) AS prev_month_rev,
+	COALESCE(ROUND(
+		(monthly_rev - LAG(monthly_rev) OVER(ORDER BY month)) * 100.0 /
+		LAG(monthly_rev) OVER(ORDER BY month) , 2
+	),0) AS growth_pct
+FROM monthly_revenue 
+ORDER BY month;
+
+--Creating view-1 for above table
+
+CREATE VIEW vw_monthly_revenue AS
+WITH monthly_revenue AS (
+    SELECT
+        TO_CHAR(o.order_date, 'YYYY-MM') AS month,
+        SUM(item.total_amount)           AS monthly_rev
+    FROM orders AS o
+    JOIN order_items AS item ON o.order_id = item.order_id
+    GROUP BY month
+)
+SELECT
+    month,
+    monthly_rev,
+    COALESCE(LAG(monthly_rev) OVER (ORDER BY month), 0) AS prev_month_rev,
+    COALESCE(ROUND(
+        (monthly_rev - LAG(monthly_rev) OVER (ORDER BY month)) * 100.0
+        / NULLIF(LAG(monthly_rev) OVER (ORDER BY month), 0)
+    , 2),0) AS growth_pct
+FROM monthly_revenue
+ORDER BY month;
+	
+--calling view-1
+
+SELECT * FROM vw_monthly_revenue;
+
+--View 2 — Category performance:
+
+CREATE VIEW vw_category_performance AS
+SELECT
+    p.category,
+    COUNT(DISTINCT o.order_id)                                        AS total_orders,
+    SUM(i.total_amount)                                           	  AS total_revenue,
+    SUM(i.profit)                                                     AS total_profit,
+    ROUND(SUM(i.profit)*100.0 / NULLIF(SUM(i.total_amount),0),2)  AS profit_margin_pct,
+    ROUND(SUM(i.total_amount) / NULLIF(COUNT(DISTINCT o.order_id),0),2) AS avg_order_value
+FROM products p 
+JOIN order_items i ON p.product_id = i.product_id
+JOIN orders o      ON i.order_id   = o.order_id       
+GROUP BY p.category;
+
+--View 3- Customer_Segment
+
+CREATE VIEW vw_customer_segments AS
+SELECT 
+	c.customer_id,
+	SUM(item.total_amount) AS total_spent,
+	CASE WHEN SUM(item.total_amount) > 50000 THEN 'HIGH'
+		 WHEN SUM(item.total_amount)  BETWEEN 20000 AND 50000 THEN 'MEDIUM'
+	ELSE 'LOW' END AS customer_segment
+FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_items AS item ON item.order_id = o.order_id
+GROUP BY c.customer_id;
+
+--ALL views 
+SELECT * FROM vw_monthly_revenue       LIMIT 5;
+SELECT * FROM vw_category_performance;
+SELECT * FROM vw_customer_segments ;
+
+
+--Verifying Hypothesis.
+
+SELECT
+	p.category,
+	ROUND(AVG(p.cost_price),2) 						AS avg_cost_price,
+	ROUND(AVG(p.unit_price),2)						AS avg_selling_price,
+	ROUND(AVG(i.discount_percent),2)				AS avg_discount_pct,
+	ROUND(AVG((p.unit_price - p.cost_price)
+		/NULLIF(p.unit_price,0)*100.0),2)			AS inherit_margin_pct,
+	ROUND(SUM(i.profit)*100.0
+		/NULLIF(SUM(i.total_amount),0),2)			AS actual_margin_pct
+FROM products p
+JOIN order_items i ON p.product_id = i.product_id
+GROUP BY p.category
+ORDER BY avg_selling_price;
+
+
+
+	
