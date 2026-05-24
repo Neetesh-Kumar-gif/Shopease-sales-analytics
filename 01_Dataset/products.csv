@@ -1,0 +1,36 @@
+product_id,product_name,category,sub_category,unit_price,cost_price
+1,Samsung Galaxy M34,Electronics,Smartphone,18999,11173.65
+2,Redmi Note 12,Electronics,Smartphone,14999,8424.42
+3,HP Pavilion 15,Electronics,Laptop,55000,39200.62
+4,Lenovo IdeaPad Slim 3,Electronics,Laptop,42000,23387.44
+5,Sony WH-1000XM4,Electronics,Headphones,22000,12216.05
+6,boAt Rockerz 450,Electronics,Headphones,1299,769.06
+7,Noise ColorFit Pro,Electronics,Smart Watch,3499,2423.65
+8,Amazfit GTS 4,Electronics,Smart Watch,12999,8522.5
+9,Samsung Galaxy Tab A8,Electronics,Tablet,17999,10629.36
+10,Banarasi Silk Saree,Clothing,Saree,2499,1575.63
+11,Cotton Printed Saree,Clothing,Saree,799,454.99
+12,Men Ethnic Kurta Set,Clothing,Kurta,1199,852.63
+13,Levi's 511 Slim Fit,Clothing,Jeans,2999,1886.54
+14,Peter England Polo,Clothing,T-Shirt,699,414.9
+15,Women Floral Midi Dress,Clothing,Dress,1399,857.18
+16,Wildcraft Puffer Jacket,Clothing,Jacket,3499,2284.85
+17,Nike Air Max,Clothing,Sneakers,7999,5709.97
+18,3 Seater Fabric Sofa,Furniture,Sofa,24999,16802.35
+19,Queen Size Wooden Bed,Furniture,Bed,18999,12961.59
+20,6-Seater Dining Set,Furniture,Dining Table,32000,18490.89
+21,5-Tier Metal Bookshelf,Furniture,Bookshelf,4999,3013.78
+22,Ergonomic Mesh Chair,Furniture,Office Chair,8999,5834.74
+23,3-Door Sliding Wardrobe,Furniture,Wardrobe,21000,14866.13
+24,Prestige Rice Cooker,Kitchen,Rice Cooker,2199,1424.7
+25,Philips Mixer 750W,Kitchen,Mixer Grinder,3499,2464.57
+26,Havells Air Fryer 4L,Kitchen,Air Fryer,5999,3682.2
+27,Hawkins 5L,Kitchen,Pressure Cooker,1499,1064.36
+28,Prestige Omega Set,Kitchen,Non-stick Pan,1899,1108.48
+29,Kent Grand Plus,Kitchen,Water Purifier,14999,9759.2
+30,Himalaya Purifying Face Wash,Beauty,Face Wash,175,120.96
+31,Neutrogena Hydro Boost,Beauty,Moisturizer,599,354.18
+32,Head & Shoulders,Beauty,Shampoo,349,233.31
+33,Fogg Deo Black,Beauty,Perfume,299,179.78
+34,Lakme Sun Expert SPF 50,Beauty,Sunscreen,249,165.91
+35,Maybelline Color Sensational,Beauty,Lipstick,299,205.39
